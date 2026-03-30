@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f0f0f">
+<title>Mi Menú</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;1,400&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0f0f;--s1:#181818;--s2:#222;--s3:#2a2a2a;--b1:rgba(255,255,255,0.07);--b2:rgba(255,255,255,0.14);--tx:#f0ede8;--mu:#777;--mu2:#555;--gold:#c9a84c;--gold2:rgba(201,168,76,0.15);--green:#7aad6b;--green2:rgba(122,173,107,0.15)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'Plus Jakarta Sans',sans-serif;overflow:hidden}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;overflow-y:auto;overflow-x:hidden;padding-bottom:80px}
+.screen.active{display:flex}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(12,12,12,0.97);border-top:1px solid var(--b1);display:flex;z-index:200;padding:6px 0 20px;backdrop-filter:blur(20px)}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 0}
+.ni-icon{font-size:20px;transition:transform 0.2s}
+.ni-lbl{font-size:10px;color:var(--mu);letter-spacing:0.04em;transition:color 0.2s}
+.ni.active .ni-lbl{color:var(--gold)}
+.ni.active .ni-icon{transform:scale(1.15)}
+.hdr{padding:52px 22px 20px}
+.hdr .tagline{font-size:11px;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px}
+.hdr h1{font-family:'Playfair Display',serif;font-size:34px;line-height:1.15}
+.hdr h1 em{color:var(--gold);font-style:italic}
+.hdr .hint{font-size:12px;color:var(--mu2);margin-top:8px}
+.dstrip{display:flex;gap:7px;padding:4px 22px 20px;overflow-x:auto;scrollbar-width:none}
+.dstrip::-webkit-scrollbar{display:none}
+.dp{flex-shrink:0;padding:7px 13px;border-radius:20px;border:1px solid var(--b1);background:transparent;color:var(--mu);font-size:11px;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all 0.18s;white-space:nowrap}
+.dp.active{background:var(--gold);border-color:var(--gold);color:#111;font-weight:500}
+.dp.has-data{border-color:var(--b2);color:var(--tx)}
+.mcards{padding:0 22px;display:flex;flex-direction:column;gap:12px}
+.mcard{background:var(--s1);border:1px solid var(--b1);border-radius:18px;padding:18px 18px 38px;cursor:pointer;transition:all 0.18s;position:relative;overflow:hidden}
+.mcard:active{transform:scale(0.98)}
+.mcard::after{content:'Ver receta →';position:absolute;bottom:14px;right:16px;font-size:11px;color:var(--mu)}
+.mcard-bar{position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold);opacity:0.5}
+.mcard.cena .mcard-bar{background:var(--green)}
+.mcard-lbl{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:7px;font-weight:500}
+.mcard.cena .mcard-lbl{color:var(--green)}
+.mcard-name{font-family:'Playfair Display',serif;font-size:20px;line-height:1.2;margin-bottom:6px}
+.mcard-desc{font-size:12px;color:var(--mu);line-height:1.6}
+.mcard-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.mtag{font-size:11px;padding:3px 9px;border-radius:12px;background:var(--gold2);color:var(--gold)}
+.mcard.cena .mtag{background:var(--green2);color:var(--green)}
+.nodata{text-align:center;padding:52px 22px;color:var(--mu)}
+.nodata .big{font-family:'Playfair Display',serif;font-size:48px;margin-bottom:14px;display:block}
+.nodata p{font-size:13px;line-height:1.7}
+.nodata strong{color:var(--gold)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;display:none;align-items:flex-end;backdrop-filter:blur(8px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--s1);border-radius:24px 24px 0 0;width:100%;max-height:88vh;overflow-y:auto;padding:28px 22px 40px;border-top:1px solid var(--b2)}
+.modal-pill{width:36px;height:4px;background:var(--b2);border-radius:2px;margin:0 auto 20px}
+.modal-label{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.cena-modal .modal-label{color:var(--green)}
+.modal-title{font-family:'Playfair Display',serif;font-size:26px;line-height:1.2;margin-bottom:16px}
+.modal-section{margin-top:20px}
+.modal-section h3{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--mu);margin-bottom:10px;font-weight:500}
+.ingr-list{display:flex;flex-direction:column;gap:7px}
+.ingr-row{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--s2);border-radius:10px;font-size:13px}
+.ingr-qty{color:var(--mu);font-size:12px}
+.ingr-row.have{border-left:2px solid var(--green)}
+.ingr-row.need{border-left:2px solid rgba(201,168,76,0.5)}
+.step-list{display:flex;flex-direction:column;gap:10px}
+.step-row{display:flex;gap:12px;font-size:13px;line-height:1.6}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--gold2);color:var(--gold);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.cena-modal .step-num{background:var(--green2);color:var(--green)}
+.tip-box{background:var(--s2);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--mu);line-height:1.6;margin-top:16px;border-left:2px solid var(--gold)}
+.cena-modal .tip-box{border-left-color:var(--green)}
+.close-btn{width:100%;margin-top:22px;padding:14px;border-radius:14px;border:1px solid var(--b2);background:transparent;color:var(--tx);font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer}
+.mhdr{padding:52px 22px 16px}
+.mhdr h2{font-family:'Playfair Display',serif;font-size:28px;margin-bottom:5px}
+.mhdr p{font-size:12px;color:var(--mu)}
+.progress-bar{margin:0 22px 20px;height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--green);border-radius:2px;transition:width 0.3s}
+.merc-body{padding:0 22px}
+.msec{margin-bottom:22px}
+.msec-title{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.mitem{display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid var(--b1);cursor:pointer}
+.mitem:last-child{border-bottom:none}
+.mcheck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--b2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all 0.18s}
+.mcheck.on{background:var(--green);border-color:var(--green);color:#111}
+.mitem.done{opacity:0.38}
+.mitem-info{flex:1}
+.mitem-name{font-size:14px}
+.mitem-sub{font-size:11px;color:var(--mu);margin-top:2px}
+.mitem-price{font-size:12px;color:var(--mu)}
+.mtotal{background:var(--s2);border-radius:14px;padding:16px 18px;margin:4px 0 20px;display:flex;justify-content:space-between;align-items:center}
+.mtotal span{font-size:12px;color:var(--mu)}
+.mtotal strong{font-size:17px;color:var(--gold)}
+.empty-merc{text-align:center;padding:52px 22px;color:var(--mu);font-size:13px;line-height:1.7}
+.shdr{padding:52px 22px 20px}
+.shdr h2{font-family:'Playfair Display',serif;font-size:28px;margin-bottom:5px}
+.shdr p{font-size:12px;color:var(--mu);line-height:1.6}
+.sbody{padding:0 22px;display:flex;flex-direction:column;gap:18px}
+.fg label{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--mu);display:block;margin-bottom:8px;font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:7px 13px;border-radius:18px;border:1px solid var(--b2);background:transparent;color:var(--mu);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all 0.15s}
+.chip.on{background:var(--gold2);border-color:var(--gold);color:var(--gold)}
+textarea,input[type=text]{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:12px;padding:13px 15px;color:var(--tx);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;line-height:1.6;resize:none;outline:none}
+textarea:focus,input[type=text]:focus{border-color:var(--gold)}
+.budget-row{display:flex;align-items:center;gap:12px}
+input[type=range]{flex:1;accent-color:var(--gold)}
+.bdisp{font-size:14px;font-weight:500;color:var(--gold);min-width:95px;text-align:right}
+.gbtn{margin:16px 22px 8px;padding:17px;border-radius:14px;border:none;background:var(--gold);color:#111;font-size:15px;font-weight:500;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all 0.18s}
+.gbtn:active{transform:scale(0.97)}
+.gbtn:disabled{opacity:0.45;cursor:not-allowed}
+.regen-row{padding:0 22px 8px;display:flex;gap:10px}
+.rbtn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--b2);background:transparent;color:var(--mu);font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer}
+.rbtn:active{background:var(--s2)}
+.lov{position:fixed;inset:0;background:rgba(10,10,10,0.93);z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(14px)}
+.lov.show{display:flex}
+.lring{width:44px;height:44px;border:2px solid rgba(201,168,76,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.75s linear infinite;margin-bottom:18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ltitle{font-family:'Playfair Display',serif;font-size:20px;margin-bottom:7px}
+.lmsg{font-size:13px;color:var(--mu)}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--s2);border:1px solid var(--b2);border-radius:20px;padding:9px 18px;font-size:13px;opacity:0;transition:all 0.25s;z-index:500;white-space:nowrap;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.fade{animation:fi 0.35s ease forwards}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="lov" id="lov">
+  <div class="lring"></div>
+  <div class="ltitle">Armando tu menú</div>
+  <div class="lmsg" id="lmsg">Pensando recetas...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-pill"></div>
+    <div class="modal-label" id="modal-label"></div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-section">
+      <h3>Ingredientes</h3>
+      <div class="ingr-list" id="modal-ingr"></div>
+    </div>
+    <div class="modal-section">
+      <h3>Preparación paso a paso</h3>
+      <div class="step-list" id="modal-steps"></div>
+    </div>
+    <div class="tip-box" id="modal-tip" style="display:none"></div>
+    <button class="close-btn" onclick="document.getElementById('modal-bg').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<div class="screen active" id="s-home">
+  <div class="hdr">
+    <div class="tagline">Tu semana está lista</div>
+    <h1>Come rico, <em>fácil</em><br>y sin estrés.</h1>
+    <div class="hint">Toca un día · luego toca la comida para ver la receta</div>
+  </div>
+  <div class="dstrip" id="dstrip"></div>
+  <div class="mcards" id="mcards">
+    <div class="nodata fade">
+      <span class="big">🍳</span>
+      <p>Aún no tienes menú.<br>Ve a <strong>Ajustes</strong> y toca<br><strong>Generar menú semanal</strong>.</p>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="s-merc">
+  <div class="mhdr">
+    <h2>Lista del mercado</h2>
+    <p id="merc-sub">Lo que necesitas comprar para los próximos 15 días</p>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+  <div class="merc-body" id="merc-body">
+    <div class="empty-merc">Genera tu menú primero desde Ajustes.</div>
+  </div>
+</div>
+
+<div class="screen" id="s-setup">
+  <div class="shdr">
+    <h2>Configuración</h2>
+    <p>Ajusta tus gustos y genera un menú nuevo cuando quieras.</p>
+  </div>
+  <div class="sbody">
+    <div class="fg">
+      <label>Proteínas que me gustan</label>
+      <div class="chips" id="cp-prot">
+        <button class="chip on" data-v="pollo">🍗 Pollo</button>
+        <button class="chip on" data-v="huevos">🥚 Huevos</button>
+        <button class="chip on" data-v="carne molida">🥩 Carne molida</button>
+        <button class="chip" data-v="cerdo">🐷 Cerdo</button>
+        <button class="chip on" data-v="lentejas">🌱 Lentejas</button>
+        <button class="chip" data-v="frijoles">🫘 Fríjoles</button>
+        <button class="chip" data-v="atún en lata">🐟 Atún</button>
+        <button class="chip" data-v="garbanzo">Garbanzo</button>
+      </div>
+    </div>
+    <div class="fg">
+      <label>¿Qué tienes en casa ahora mismo?</label>
+      <textarea id="f-stock" rows="3" placeholder="Ej: pollo, arroz, cebolla, tomate, huevos, limón...">pollo, arroz, especias, salsa de tomate, limón</textarea>
+    </div>
+    <div class="fg">
+      <label>Alergias o lo que NO como</label>
+      <input type="text" id="f-allergy" placeholder="Ej: mariscos, gluten, picante...">
+    </div>
+    <div class="fg">
+      <label>¿Para cuántas personas?</label>
+      <div class="chips" id="cp-pers">
+        <button class="chip on" data-v="1">Solo yo</button>
+        <button class="chip" data-v="2">2 personas</button>
+        <button class="chip" data-v="3">3 personas</button>
+        <button class="chip" data-v="4">4+</button>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Esfuerzo en cocina</label>
+      <div class="chips" id="cp-eff">
+        <button class="chip on" data-v="mínimo (máx 15 min)">Mínimo</button>
+        <button class="chip" data-v="moderado (30 min)">Moderado</button>
+        <button class="chip" data-v="me da igual">Me da igual</button>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Presupuesto quincena (COP)</label>
+      <div class="budget-row">
+        <input type="range" id="f-budget" min="50000" max="600000" step="10000" value="200000">
+        <span class="bdisp" id="bdisp">$200.000</span>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Notas extra (opcional)</label>
+      <input type="text" id="f-extra" placeholder="Ej: quiero bajar de peso, sin mucho aceite...">
+    </div>
+  </div>
+  <button class="gbtn" id="gbtn" onclick="generate()">Generar menú semanal ✦</button>
+  <div class="regen-row" id="regen-row" style="display:none">
+    <button class="rbtn" onclick="generate()">🔄 Regenerar semana</button>
+    <button class="rbtn" onclick="regenDay()">🎲 Cambiar día activo</button>
+  </div>
+  <div style="height:20px"></div>
+</div>
+
+<nav class="bnav">
+  <div class="ni active" onclick="nav('s-home',this)"><div class="ni-icon">🏠</div><div class="ni-lbl">Menú</div></div>
+  <div class="ni" onclick="nav('s-merc',this)"><div class="ni-icon">🛒</div><div class="ni-lbl">Mercado</div></div>
+  <div class="ni" onclick="nav('s-setup',this)"><div class="ni-icon">⚙️</div><div class="ni-lbl">Ajustes</div></div>
+</nav>
+
+<script>
+const DAYS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+let ST=JSON.parse(localStorage.getItem('ms3')||'{}');
+let activeDay=0;
+
+document.querySelectorAll('#cp-prot .chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('on')));
+['cp-pers','cp-eff'].forEach(id=>{
+  document.querySelectorAll('#'+id+' .chip').forEach(c=>c.addEventListener('click',()=>{
+    document.querySelectorAll('#'+id+' .chip').forEach(x=>x.classList.remove('on'));
+    c.classList.add('on');
+  }));
+});
+document.getElementById('f-budget').addEventListener('input',function(){
+  document.getElementById('bdisp').textContent='$'+parseInt(this.value).toLocaleString('es-CO');
+});
+
+function nav(id,el){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='s-setup'&&ST.menu) document.getElementById('regen-row').style.display='flex';
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function closeModal(e){
+  if(e.target===document.getElementById('modal-bg'))
+    document.getElementById('modal-bg').classList.remove('open');
+}
+
+function buildStrip(){
+  const s=document.getElementById('dstrip');
+  s.innerHTML='';
+  DAYS.forEach((d,i)=>{
+    const b=document.createElement('button');
+    b.className='dp'+(i===activeDay?' active':'')+(ST.menu&&ST.menu[i]?' has-data':'');
+    b.textContent=d;
+    b.onclick=()=>{activeDay=i;buildStrip();renderDay();};
+    s.appendChild(b);
+  });
+}
+
+function renderDay(){
+  const c=document.getElementById('mcards');
+  if(!ST.menu||!ST.menu[activeDay]){
+    c.innerHTML=`<div class="nodata fade"><span class="big">🍳</span><p>Aún no tienes menú.<br>Ve a <strong>Ajustes</strong> y toca<br><strong>Generar menú semanal</strong>.</p></div>`;
+    return;
+  }
+  const d=ST.menu[activeDay];
+  c.innerHTML=`
+    <div class="mcard fade" onclick="openRecipe(${activeDay},'almuerzo')">
+      <div class="mcard-bar"></div>
+      <div class="mcard-lbl">☀️ Almuerzo</div>
+      <div class="mcard-name">${d.almuerzo_nombre||'Almuerzo'}</div>
+      <div class="mcard-desc">${d.almuerzo_desc||''}</div>
+      <div class="mcard-tags">${(d.almuerzo_tags||[]).map(t=>`<span class="mtag">${t}</span>`).join('')}</div>
+    </div>
+    <div class="mcard cena fade" style="animation-delay:.1s" onclick="openRecipe(${activeDay},'cena')">
+      <div class="mcard-bar"></div>
+      <div class="mcard-lbl">🌙 Cena ligera</div>
+      <div class="mcard-name">${d.cena_nombre||'Cena'}</div>
+      <div class="mcard-desc">${d.cena_desc||''}</div>
+      <div class="mcard-tags">${(d.cena_tags||[]).map(t=>`<span class="mtag">${t}</span>`).join('')}</div>
+    </div>
+    <div style="height:10px"></div>`;
+}
+
+function openRecipe(dayIdx,tipo){
+  const d=ST.menu[dayIdx];
+  const isCena=tipo==='cena';
+  const stock=(ST.lastStock||'').toLowerCase();
+  const modal=document.getElementById('modal');
+  modal.className=isCena?'modal cena-modal':'modal';
+  document.getElementById('modal-label').textContent=isCena?'🌙 Cena ligera':'☀️ Almuerzo';
+  document.getElementById('modal-title').textContent=isCena?d.cena_nombre:d.almuerzo_nombre;
+  const ingrs=isCena?(d.cena_ingredientes||[]):(d.almuerzo_ingredientes||[]);
+  document.getElementById('modal-ingr').innerHTML=ingrs.map(ing=>{
+    const stockWords=stock.split(/[,\s]+/).filter(w=>w.length>2);
+    const have=stockWords.some(w=>ing.nombre.toLowerCase().includes(w));
+    return `<div class="ingr-row ${have?'have':'need'}">
+      <span>${have?'✓ ':''} ${ing.nombre}</span>
+      <span class="ingr-qty">${ing.cantidad}</span>
+    </div>`;
+  }).join('');
+  const steps=isCena?(d.cena_pasos||[]):(d.almuerzo_pasos||[]);
+  document.getElementById('modal-steps').innerHTML=steps.map((s,i)=>
+    `<div class="step-row"><div class="step-num">${i+1}</div><div>${s}</div></div>`
+  ).join('');
+  const tip=isCena?d.cena_tip:d.almuerzo_tip;
+  const tipEl=document.getElementById('modal-tip');
+  if(tip){tipEl.textContent='💡 '+tip;tipEl.style.display='block';}else{tipEl.style.display='none';}
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function renderMercado(){
+  const body=document.getElementById('merc-body');
+  if(!ST.mercado||!ST.mercado.length){
+    body.innerHTML=`<div class="empty-merc">Genera tu menú primero desde Ajustes.</div>`;
+    return;
+  }
+  const ck=ST.checked||{};
+  const groups={};
+  ST.mercado.forEach((item,idx)=>{
+    if(!groups[item.cat])groups[item.cat]=[];
+    groups[item.cat].push({...item,idx});
+  });
+  let html='';
+  Object.entries(groups).forEach(([cat,items])=>{
+    html+=`<div class="msec"><div class="msec-title">${cat}</div>`;
+    items.forEach(item=>{
+      const key='i'+item.idx;
+      const done=ck[key];
+      html+=`<div class="mitem ${done?'done':''}" onclick="toggleMerc('${key}',this)">
+        <div class="mcheck ${done?'on':''}">${done?'✓':''}</div>
+        <div class="mitem-info">
+          <div class="mitem-name">${item.nombre}</div>
+          <div class="mitem-sub">${item.cantidad}${item.para?' · '+item.para:''}</div>
+        </div>
+        <div class="mitem-price">${item.precio||''}</div>
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+  html+=`<div class="mtotal"><span>Total estimado quincena</span><strong>${ST.totalMercado||''}</strong></div>`;
+  body.innerHTML=html;
+  updateProgress();
+}
+
+function toggleMerc(key,el){
+  if(!ST.checked)ST.checked={};
+  ST.checked[key]=!ST.checked[key];
+  save();
+  el.classList.toggle('done');
+  const ck=el.querySelector('.mcheck');
+  ck.classList.toggle('on');
+  ck.textContent=ST.checked[key]?'✓':'';
+  updateProgress();
+}
+
+function updateProgress(){
+  if(!ST.mercado)return;
+  const total=ST.mercado.length;
+  const done=Object.values(ST.checked||{}).filter(Boolean).length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('prog').style.width=pct+'%';
+  document.getElementById('merc-sub').textContent=done>0?`${done} de ${total} productos comprados (${pct}%)`:'Lo que necesitas comprar para los próximos 15 días';
+}
+
+function save(){localStorage.setItem('ms3',JSON.stringify(ST));}
+
+function getP(){
+  return{
+    proteins:[...document.querySelectorAll('#cp-prot .chip.on')].map(c=>c.dataset.v).join(', '),
+    personas:document.querySelector('#cp-pers .chip.on')?.dataset.v||'1',
+    effort:document.querySelector('#cp-eff .chip.on')?.dataset.v||'mínimo',
+    budget:document.getElementById('bdisp').textContent,
+    stock:document.getElementById('f-stock').value,
+    allergy:document.getElementById('f-allergy').value||'ninguna',
+    extra:document.getElementById('f-extra').value||'ninguna'
+  };
+}
+
+async function callAPI(prompt,maxTokens){
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,messages:[{role:'user',content:prompt}]})
+  });
+  if(!res.ok)throw new Error('API error '+res.status);
+  const data=await res.json();
+  const raw=data.content?.map(b=>b.text||'').join('')||'';
+  const m=raw.match(/\{[\s\S]*\}/);
+  if(!m)throw new Error('Sin JSON en respuesta');
+  return JSON.parse(m[0]);
+}
+
+async function generate(){
+  const p=getP();
+  ST.lastStock=p.stock;
+  document.getElementById('lov').className='lov show';
+  document.getElementById('gbtn').disabled=true;
+  const msgs=['Pensando recetas variadas...','Armando la semana...','Calculando ingredientes...','Preparando lista del mercado...','Casi listo...'];
+  let mi=0;
+  const iv=setInterval(()=>{document.getElementById('lmsg').textContent=msgs[Math.min(mi++,msgs.length-1)];},2200);
+
+  const prompt=`Eres un chef colombiano experto en cocina económica. Responde ÚNICAMENTE con JSON válido, sin texto extra, sin backticks.
+
+PERFIL DEL USUARIO:
+- Le gustan: ${p.proteins}
+- Tiene en casa AHORA: ${p.stock}
+- No puede comer: ${p.allergy}
+- Personas: ${p.personas}
+- Tiempo máximo cocinando: ${p.effort}
+- Presupuesto quincena: ${p.budget} COP
+- Notas: ${p.extra}
+
+REGLAS:
+1. 7 días, sin repetir ningún plato
+2. Alterna proteínas: no pongas la misma dos días seguidos
+3. Almuerzo = proteína + carbohidrato + verdura, nutritivo y sabroso
+4. Cena = MUY ligera (arepa, sopa pequeña, huevito, fruta, etc.) máx 10 minutos
+5. Usa primero lo que tiene en casa
+6. La lista mercado SOLO incluye lo que le FALTA (no tiene): ${p.stock} ya lo tiene
+7. Lista organizada para 15 días (2 semanas), cantidades dobles si aplica
+8. Precios reales Colombia 2025 (D1, Éxito, tienda barrio)
+9. Receta completa: ingredientes con cantidades exactas + pasos claros
+
+JSON EXACTO (7 objetos en menu):
+{
+  "menu":[
+    {
+      "almuerzo_nombre":"Arroz con pollo guisado",
+      "almuerzo_desc":"Pollo jugoso en salsa de tomate con arroz blanco",
+      "almuerzo_tags":["⏱ 25 min","🍗 Pollo","💰 Económico"],
+      "almuerzo_ingredientes":[
+        {"nombre":"Pechuga de pollo","cantidad":"250g"},
+        {"nombre":"Arroz","cantidad":"¾ taza"},
+        {"nombre":"Tomate chonto","cantidad":"1 unidad"},
+        {"nombre":"Cebolla cabezona","cantidad":"½ unidad"},
+        {"nombre":"Ajo","cantidad":"2 dientes"},
+        {"nombre":"Aceite","cantidad":"1 cucharada"},
+        {"nombre":"Sal, comino, pimienta","cantidad":"al gusto"}
+      ],
+      "almuerzo_pasos":[
+        "Pon a cocinar el arroz con agua y sal a fuego medio por 18 minutos.",
+        "Corta el pollo en trozos medianos, agrega sal, pimienta y comino.",
+        "Calienta aceite en sartén, sofríe cebolla y ajo 3 minutos.",
+        "Agrega tomate picado, cocina 2 minutos revolviendo.",
+        "Incorpora el pollo, tapa y cocina 15 minutos a fuego medio-bajo.",
+        "Sirve el pollo con su salsa sobre el arroz."
+      ],
+      "almuerzo_tip":"Agrega una hoja de laurel mientras cocinas el pollo para más sabor.",
+      "cena_nombre":"Arepa con queso",
+      "cena_desc":"Arepa de maíz caliente con queso costeño",
+      "cena_tags":["⏱ 10 min","🌙 Ligero"],
+      "cena_ingredientes":[
+        {"nombre":"Harina de maíz P.A.N.","cantidad":"½ taza"},
+        {"nombre":"Queso costeño","cantidad":"30g"},
+        {"nombre":"Sal","cantidad":"pizca"}
+      ],
+      "cena_pasos":[
+        "Mezcla harina con agua tibia y sal hasta obtener masa suave.",
+        "Forma una arepa redonda de 1 cm de grosor.",
+        "Cocina en sartén seca 4 minutos por cada lado hasta dorar.",
+        "Pon el queso encima, tapa 1 minuto para que se derrita y sirve."
+      ],
+      "cena_tip":"Puedes agregar un huevo frito al lado para más proteína."
+    }
+  ],
+  "mercado":[
+    {"cat":"🍗 Carnes y proteínas","nombre":"Pechuga de pollo","cantidad":"1.5 kg","para":"semanas 1 y 2","precio":"$18.000"},
+    {"cat":"🥦 Verduras y frutas","nombre":"Cebolla cabezona","cantidad":"1 kg","para":"toda la quincena","precio":"$3.500"},
+    {"cat":"🌾 Granos y harinas","nombre":"Arroz Diana x2kg","cantidad":"2 bolsas","para":"toda la quincena","precio":"$16.000"}
+  ],
+  "totalMercado":"$185.000"
+}`;
+
+  try{
+    const parsed=await callAPI(prompt,4500);
+    if(!parsed.menu||parsed.menu.length<7)throw new Error('Menú incompleto');
+    ST={...ST,menu:parsed.menu,mercado:parsed.mercado||[],totalMercado:parsed.totalMercado||'',checked:{}};
+    save();
+    clearInterval(iv);
+    document.getElementById('lov').className='lov';
+    document.getElementById('gbtn').disabled=false;
+    document.getElementById('regen-row').style.display='flex';
+    buildStrip();renderDay();renderMercado();
+    nav('s-home',document.querySelector('.ni'));
+    toast('✦ Menú listo — toca cada comida para ver la receta');
+  }catch(e){
+    clearInterval(iv);
+    document.getElementById('lov').className='lov';
+    document.getElementById('gbtn').disabled=false;
+    toast('Error: '+e.message.slice(0,50));
+    console.error(e);
+  }
+}
+
+async function regenDay(){
+  if(!ST.menu)return;
+  const p=getP();
+  document.getElementById('lov').className='lov show';
+  document.getElementById('lmsg').textContent='Cambiando '+DAYS[activeDay]+'...';
+  const existing=ST.menu.map((d,i)=>i!==activeDay?d.almuerzo_nombre:null).filter(Boolean).join(', ');
+  const prompt=`Eres un chef colombiano. Responde SOLO con JSON válido sin texto extra.
+
+Genera UN día diferente. NO uses estos platos que ya hay esta semana: ${existing}
+
+Datos: proteínas: ${p.proteins}, tiene en casa: ${p.stock}, evitar: ${p.allergy}, personas: ${p.personas}, esfuerzo: ${p.effort}
+
+Devuelve UN objeto (no array) con esta estructura exacta:
+{"almuerzo_nombre":"...","almuerzo_desc":"...","almuerzo_tags":["⏱ Xmin","..."],"almuerzo_ingredientes":[{"nombre":"...","cantidad":"..."}],"almuerzo_pasos":["...","...","...","..."],"almuerzo_tip":"...","cena_nombre":"...","cena_desc":"...","cena_tags":["⏱ Xmin","🌙 Ligero"],"cena_ingredientes":[{"nombre":"...","cantidad":"..."}],"cena_pasos":["...","..."],"cena_tip":"..."}`;
+  try{
+    const parsed=await callAPI(prompt,1500);
+    ST.menu[activeDay]=parsed;
+    save();
+    document.getElementById('lov').className='lov';
+    buildStrip();renderDay();
+    nav('s-home',document.querySelector('.ni'));
+    toast('✦ '+DAYS[activeDay]+' actualizado');
+  }catch(e){
+    document.getElementById('lov').className='lov';
+    toast('Error al cambiar el día');
+    console.error(e);
+  }
+}
+
+// BOOT
+buildStrip();renderDay();renderMercado();
+if(ST.menu)document.getElementById('regen-row').style.display='flex';
+</script>
+</body>
+</html>
